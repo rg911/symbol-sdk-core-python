@@ -31,11 +31,6 @@ class TransactionSample:
             transaction = self.facade.transaction_factory.create(descriptor)
             self.sign_and_print(transaction)
 
-    def process_transaction_descriptor(self, descriptor):
-        self.set_common_fields(descriptor)
-        transaction = self.facade.transaction_factory.create(descriptor)
-        self.sign_and_print(transaction)
-
     @abstractmethod
     def set_common_fields(self, descriptor):
         pass
