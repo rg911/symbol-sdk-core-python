@@ -4,6 +4,7 @@
 # Shows how to create all transactions manually using TransactionFactory.
 #
 
+import argparse
 from abc import abstractmethod
 from binascii import hexlify, unhexlify
 
@@ -18,16 +19,22 @@ MESSAGE = 'V belom plashche s krovavym podboyem, sharkayushchey kavaleriyskoy po
 
 
 class TransactionSample:
-    def __init__(self, facade):
+    def __init__(self, facade, address):
         self.facade = facade
         self.key_pair = self.facade.KeyPair(PrivateKey(unhexlify('11002233445566778899AABBCCDDEEFF11002233445566778899AABBCCDDEEFF')))
         self.sample_public_key = PublicKey(unhexlify('BE0B4CF546B7B4F4BBFCFF9F574FDA527C07A53D3FC76F8BB7DB746F8E8E0A9F'))
+        self.sample_address = address
 
     def process_transaction_descriptors(self, transaction_descriptors):
         for descriptor in transaction_descriptors:
             self.set_common_fields(descriptor)
             transaction = self.facade.transaction_factory.create(descriptor)
             self.sign_and_print(transaction)
+
+    def process_transaction_descriptor(self, descriptor):
+        self.set_common_fields(descriptor)
+        transaction = self.facade.transaction_factory.create(descriptor)
+        self.sign_and_print(transaction)
 
     @abstractmethod
     def set_common_fields(self, descriptor):
@@ -41,15 +48,20 @@ class TransactionSample:
         print(hexlify(transaction.serialize()))
         print('---- ' * 20)
 
+    def run_deterministic_transfer(self):
+        transaction = self.facade.transaction_factory.create({
+            'type': 'transfer',
+            'signer_public_key': str(self.key_pair.public_key),
+            'recipient_address': self.sample_address.bytes
+            'deadline': 12345
+        })
+
 
 class NisTransactionSample(TransactionSample):
     def __init__(self):
-        from symbolchain.core.nis1.Network import Address
+        super().__init__(NisFacade('testnet'), NisFacade.Address('TALICEROONSJCPHC63F52V6FY3SDMSVAEUGHMB7C'))
 
-        super().__init__(NisFacade('testnet'))
-        self.sample_address = Address('TALICEROONSJCPHC63F52V6FY3SDMSVAEUGHMB7C')
-
-    def run(self):
+    def sample.run_all(self):
         self.process_transaction_descriptors([
             self.importance_transfer(),
 
@@ -94,12 +106,9 @@ class SymTransactionSample(TransactionSample):
     # pylint: disable=too-many-public-methods
 
     def __init__(self):
-        from symbolchain.core.sym.Network import Address
+        super().__init__(SymFacade('public_test'), SymFacade.Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y'))
 
-        super().__init__(SymFacade('public_test'))
-        self.sample_address = Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y')
-
-    def run(self):
+    def sample.run_all(self):
         self.process_transaction_descriptors([
             self.account_address_restriction_1(),
             self.account_address_restriction_2(),
@@ -416,13 +425,13 @@ class SymTransactionSample(TransactionSample):
 
 
 def main():
-    print('NIS1 ' * 20)
-    NisTransactionSample().run()
-    print()
+    parser = argparse.ArgumentParser(description='transaction sign example')
+    parser.add_argument('--blockchain', help='blockchain', choices=('nis1', 'symbol'), required=True)
+    args = parser.parse_args()
 
-    print('SYM  ' * 20)
-    SymTransactionSample().run()
-    print()
+    sample = NisTransactionSample() if 'nis1' == args.blockchain else SymTransactionSample()
+    sample.run_all()
+    sample.run_deterministic_transfer()
 
 
 if __name__ == '__main__':
