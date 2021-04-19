@@ -48,15 +48,6 @@ class TransactionSample:
         print(hexlify(transaction.serialize()))
         print('---- ' * 20)
 
-    def run_deterministic_transfer(self):
-        transaction = self.facade.transaction_factory.create({
-            'type': 'transfer',
-            'signer_public_key': str(self.key_pair.public_key),
-            'deadline': 12345,
-            'recipient_address': str(self.sample_address),
-            'message': 'blah blah'
-        })
-
 
 class NisTransactionSample(TransactionSample):
     def __init__(self):
@@ -77,7 +68,7 @@ class NisTransactionSample(TransactionSample):
     def set_common_fields(self, descriptor):
         descriptor.update({
             'signer_public_key': self.key_pair.public_key,
-            'timestamp': 12345
+            'deadline': 12345
         })
 
     # region importance transfer
@@ -432,7 +423,6 @@ def main():
 
     sample = NisTransactionSample() if 'nis1' == args.blockchain else SymTransactionSample()
     sample.run_all()
-    sample.run_deterministic_transfer()
 
 
 if __name__ == '__main__':
