@@ -52,8 +52,9 @@ class TransactionSample:
         transaction = self.facade.transaction_factory.create({
             'type': 'transfer',
             'signer_public_key': str(self.key_pair.public_key),
-            'recipient_address': self.sample_address.bytes
-            'deadline': 12345
+            'deadline': 12345,
+            'recipient_address': str(self.sample_address),
+            'message': 'blah blah'
         })
 
 
@@ -61,7 +62,7 @@ class NisTransactionSample(TransactionSample):
     def __init__(self):
         super().__init__(NisFacade('testnet'), NisFacade.Address('TALICEROONSJCPHC63F52V6FY3SDMSVAEUGHMB7C'))
 
-    def sample.run_all(self):
+    def run_all(self):
         self.process_transaction_descriptors([
             self.importance_transfer(),
 
@@ -108,7 +109,7 @@ class SymTransactionSample(TransactionSample):
     def __init__(self):
         super().__init__(SymFacade('public_test'), SymFacade.Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y'))
 
-    def sample.run_all(self):
+    def run_all(self):
         self.process_transaction_descriptors([
             self.account_address_restriction_1(),
             self.account_address_restriction_2(),
