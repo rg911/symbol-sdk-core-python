@@ -4,12 +4,9 @@
 # Shows how to create all transactions manually using TransactionFactory.
 #
 
-import argparse
-from abc import abstractmethod
 from binascii import hexlify, unhexlify
 
 from symbolchain.core.CryptoTypes import Hash256, PrivateKey, PublicKey
-from symbolchain.core.facade.NisFacade import NisFacade
 from symbolchain.core.facade.SymFacade import SymFacade
 from symbolchain.core.sym.IdGenerator import generate_mosaic_id, generate_namespace_id
 
@@ -18,85 +15,17 @@ SAMPLE_NAMESPACE_ID = 0xC01DFEE7FEEDDEAD
 MESSAGE = 'V belom plashche s krovavym podboyem, sharkayushchey kavaleriyskoy pokhodkoy'
 
 
-class TransactionSample:
-    def __init__(self, facade, address):
-        self.facade = facade
-        self.key_pair = self.facade.KeyPair(PrivateKey(unhexlify('11002233445566778899AABBCCDDEEFF11002233445566778899AABBCCDDEEFF')))
-        self.sample_public_key = PublicKey(unhexlify('BE0B4CF546B7B4F4BBFCFF9F574FDA527C07A53D3FC76F8BB7DB746F8E8E0A9F'))
-        self.sample_address = address
-
-    def process_transaction_descriptors(self, transaction_descriptors):
-        for descriptor in transaction_descriptors:
-            self.set_common_fields(descriptor)
-            transaction = self.facade.transaction_factory.create(descriptor)
-            self.sign_and_print(transaction)
-
-    @abstractmethod
-    def set_common_fields(self, descriptor):
-        pass
-
-    def sign_and_print(self, transaction):
-        signature = self.facade.sign_transaction(self.key_pair, transaction)
-        self.facade.transaction_factory.attach_signature(transaction, signature)
-
-        print(transaction)
-        print(hexlify(transaction.serialize()))
-        print('---- ' * 20)
-
-
-class NisTransactionSample(TransactionSample):
-    def __init__(self):
-        super().__init__(NisFacade('testnet'), NisFacade.Address('TALICEROONSJCPHC63F52V6FY3SDMSVAEUGHMB7C'))
-
-    def run_all(self):
-        self.process_transaction_descriptors([
-            self.importance_transfer(),
-
-            self.transfer({'amount': 12345_000000}),
-            self.transfer({'message': MESSAGE}),
-            self.transfer({
-                'amount': 12345_000000,
-                'message': MESSAGE
-            })
-        ])
-
-    def set_common_fields(self, descriptor):
-        descriptor.update({
-            'signer_public_key': self.key_pair.public_key,
-            'deadline': 12345
-        })
-
-    # region importance transfer
-
-    def importance_transfer(self):
-        return {
-            'type': 'importance-transfer',
-            'mode': 1,
-            'remote_account_public_key': self.sample_public_key
-        }
-
-    # endregion
-
-    # region transfers
-
-    def transfer(self, additional_properties):
-        return {
-            'type': 'transfer',
-            'recipient_address': self.sample_address,
-            **additional_properties
-        }
-
-    # endregion
-
-
-class SymTransactionSample(TransactionSample):
+class SymTransactionSample:
     # pylint: disable=too-many-public-methods
 
     def __init__(self):
-        super().__init__(SymFacade('public_test'), SymFacade.Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y'))
+        self.facade = SymFacade('public_test')
+        self.key_pair = self.facade.KeyPair(PrivateKey(unhexlify('11002233445566778899AABBCCDDEEFF11002233445566778899AABBCCDDEEFF')))
+        self.sample_address = self.facade.Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y')
+        self.sample_public_key = PublicKey(unhexlify('BE0B4CF546B7B4F4BBFCFF9F574FDA527C07A53D3FC76F8BB7DB746F8E8E0A9F'))
 
-    def run_all(self):
-        self.process_transaction_descriptors([
+    def run(self):
+        transaction_descriptors = [
             self.account_address_restriction_1(),
             self.account_address_restriction_2(),
             self.account_mosaic_restriction(),
@@ -129,14 +58,28 @@ class SymTransactionSample(TransactionSample):
             self.transfer_without_message(),
             self.transfer_without_mosaics(),
             self.transfer()
-        ])
+        ]
+
+        for descriptor in transaction_descriptors:
+            self.set_common_fields(descriptor)
+            transaction = self.facade.transaction_factory.create(descriptor)
+            self.sign_and_print(transaction)
 
     def set_common_fields(self, descriptor):
-        descriptor.update({
+        common_fields = {
             'signer_public_key': self.key_pair.public_key.bytes,
             'fee': 625,
             'deadline': 12345
-        })
+        }
+        descriptor.update(common_fields)
+
+    def sign_and_print(self, transaction):
+        signature = self.facade.sign_transaction(self.key_pair, transaction)
+        self.facade.transaction_factory.attach_signature(transaction, signature)
+
+        print(transaction)
+        print(hexlify(transaction.serialize()))
+        print('---- '*20)
 
     # region account restrictions
 
@@ -395,13 +338,13 @@ class SymTransactionSample(TransactionSample):
     def transfer_without_mosaics(self):
         return {
             **self.basic_transfer(),
-            'message': 'V belom plashche s krovavym podboyem, sharkayushchey kavaleriyskoy pokhodkoy'
+            'message': MESSAGE
         }
 
     def transfer(self):
         return {
             **self.basic_transfer(),
-            'message': 'V belom plashche s krovavym podboyem, sharkayushchey kavaleriyskoy pokhodkoy',
+            'message': MESSAGE,
             'mosaics': [
                 (SAMPLE_MOSAIC_ID, 12345_000000),
                 (0x1234567812345678, 10)
@@ -412,12 +355,8 @@ class SymTransactionSample(TransactionSample):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='transaction sign example')
-    parser.add_argument('--blockchain', help='blockchain', choices=('nis1', 'symbol'), required=True)
-    args = parser.parse_args()
-
-    sample = NisTransactionSample() if 'nis1' == args.blockchain else SymTransactionSample()
-    sample.run_all()
+    sample = SymTransactionSample()
+    sample.run()
 
 
 if __name__ == '__main__':
