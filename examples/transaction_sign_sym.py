@@ -24,7 +24,7 @@ class SymTransactionSample:
         self.sample_address = self.facade.Address('TASYMBOLLK6FSL7GSEMQEAWN7VW55ZSZU2Q2Q5Y')
         self.sample_public_key = PublicKey(unhexlify('BE0B4CF546B7B4F4BBFCFF9F574FDA527C07A53D3FC76F8BB7DB746F8E8E0A9F'))
 
-    def run(self):
+    def run_all(self):
         transaction_descriptors = [
             self.account_address_restriction_1(),
             self.account_address_restriction_2(),
@@ -356,7 +356,7 @@ class SymTransactionSample:
 
 def main():
     sample = SymTransactionSample()
-    sample.run()
+    sample.run_all()
 
 
 if __name__ == '__main__':

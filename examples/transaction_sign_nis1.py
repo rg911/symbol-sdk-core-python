@@ -9,8 +9,6 @@ from binascii import hexlify, unhexlify
 from symbolchain.core.CryptoTypes import PrivateKey, PublicKey
 from symbolchain.core.facade.NisFacade import NisFacade
 
-SAMPLE_MOSAIC_ID = 0x7EDCBA90FEDCBA90
-SAMPLE_NAMESPACE_ID = 0xC01DFEE7FEEDDEAD
 MESSAGE = 'V belom plashche s krovavym podboyem, sharkayushchey kavaleriyskoy pokhodkoy'
 
 
@@ -39,10 +37,11 @@ class NisTransactionSample:
             self.sign_and_print(transaction)
 
     def set_common_fields(self, descriptor):
-        descriptor.update({
+        common_fields = {
             'signer_public_key': self.key_pair.public_key,
             'deadline': 12345
-        })
+        }
+        descriptor.update(common_fields)
 
     def sign_and_print(self, transaction):
         signature = self.facade.sign_transaction(self.key_pair, transaction)
@@ -50,7 +49,7 @@ class NisTransactionSample:
 
         print(transaction)
         print(hexlify(transaction.serialize()))
-        print('---- ' * 20)
+        print('---- '*20)
 
     # region importance transfer
 
