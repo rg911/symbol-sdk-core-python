@@ -31,12 +31,13 @@ class NisTransactionSample:
             })
         ]
 
-        for descriptor in transaction_descriptors:
+        for descriptor in transaction_descriptors:  # pylint: disable=duplicate-code
             self.set_common_fields(descriptor)
             transaction = self.facade.transaction_factory.create(descriptor)
             self.sign_and_print(transaction)
 
     def set_common_fields(self, descriptor):
+        # pylint: disable=duplicate-code
         common_fields = {
             'signer_public_key': self.key_pair.public_key,
             'deadline': 12345
@@ -44,6 +45,7 @@ class NisTransactionSample:
         descriptor.update(common_fields)
 
     def sign_and_print(self, transaction):
+        # pylint: disable=duplicate-code
         signature = self.facade.sign_transaction(self.key_pair, transaction)
         self.facade.transaction_factory.attach_signature(transaction, signature)
 
